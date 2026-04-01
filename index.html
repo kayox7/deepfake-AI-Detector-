@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AI Image Detector</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-gray-900 to-gray-800 text-white flex items-center justify-center min-h-screen">
+
+  <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl w-[420px] text-center">
+
+    <h1 class="text-3xl font-bold mb-4">🧠 AI Image Detector</h1>
+
+    <!-- Image Preview -->
+    <img id="preview" class="hidden mb-4 rounded-xl max-h-48 mx-auto"/>
+
+    <input type="file" id="imageInput" class="mb-4 w-full text-sm">
+
+    <button onclick="uploadImage()" 
+      class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-xl w-full transition">
+      Detect Image
+    </button>
+
+    <!-- Result -->
+    <div id="result" class="mt-6 text-lg font-semibold"></div>
+
+  </div>
+
+  <script>
+    const input = document.getElementById("imageInput");
+    const preview = document.getElementById("preview");
+
+    // Show image preview
+    input.addEventListener("change", () => {
+      const file = input.files[0];
+      if (file) {
+        preview.src = URL.createObjectURL(file);
+        preview.classList.remove("hidden");
+      }
+    });
+
+    async function uploadImage() {
+      const file = input.files[0];
+
+      if (!file) {
+        alert("Select image first");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append("image", file);
+
+      document.getElementById("result").innerText = "⏳ Analyzing image...";
+
+      try {
+        const res = await fetch("http://127.0.0.1:5000/detect", {
+          method: "POST",
+          body: formData
+        });
+
+        const data = await res.json();
+
+        // 🎨 Color based on result
+        let color = "white";
+        if (data.result === "AI Generated") color = "#ef4444"; // red
+        else if (data.result === "Suspicious") color = "#facc15"; // yellow
+        else color = "#22c55e"; // green
+
+        document.getElementById("result").innerHTML = `
+          <span style="color:${color}; font-size:22px;">
+            ${data.result}
+          </span>
+          <br>
+          Confidence: ${data.confidence}%
+        `;
+
+      } catch (err) {
+        document.getElementById("result").innerText = "❌ Server error";
+      }
+    }
+  </script>
+
+</body>
+</html>
